@@ -30,11 +30,12 @@ class EventoController extends ApiController
     //opcion 0: eventos que no son del usuario; otra opcion: eventos del usuario
         $operator = ($opcion == 0) ? "!=" : "=";
         $eventos = Evento::where("users_id", $operator, Auth::id())->get();
-
         if($opcion == 0){
             foreach($eventos as $index => $evento){
-                $ae = AsistenciaEvento::where("users_id", Auth::id())->where("evento_id", $evento->id)->get();
-                $eventos[$index]["bandApuntado"] = !$ae->isEmpty();
+                $ae = AsistenciaEvento::where("users_id", Auth::id())->where("evento_id", $evento->id)->first();
+                $eventos[$index]["bandApuntado"] = !is_null($ae);
+                $eventos[$index]["bandCheckAnfitrion"] = !is_null($ae) ? $ae->check_anfitrion : 0;
+                $eventos[$index]["bandCheckInvitado"] = !is_null($ae) ? $ae->check_invitado : 0;
             }
         }
 
@@ -60,11 +61,13 @@ class EventoController extends ApiController
                 "descripcion" => "required",
                 "foto" => "required|image|mimes:jpeg,png,jpg,gif,svg|max:2048",
                 "fecha_de_asistencia" => "required|date",
-                "fecha_de_termino" => "required|date"
+                "fecha_de_termino" => "required|date|after_or_equal:fecha_de_asistencia"
             ]
         );
 
-        $this->checkValidation($validator);
+        $bandVali = $this->checkValidation($validator);
+        if($bandVali) return $bandVali;
+
         $rutaImage = null;
 
         if($request->hasFile("foto")){
@@ -78,8 +81,7 @@ class EventoController extends ApiController
         }
 
         try{
-            // $_Erequest["fecha_de_asistencia"] = $this->convertTime2UTC($_Erequest["fecha_de_asistencia"]);
-            // $_Erequest["fecha_de_termino"] = $this->convertTime2UTC($_Erequest["fecha_de_termino"]);
+            $_Erequest["foto"] = empty($rutaImage) ? null : $rutaImage;
             $_Erequest["fecha_de_asistencia"] = $_Erequest["fecha_de_asistencia"];
             $_Erequest["fecha_de_termino"] = $_Erequest["fecha_de_termino"];
             $_Erequest["users_id"] = Auth::id();
@@ -133,13 +135,15 @@ class EventoController extends ApiController
                 "titulo" => "required",
                 "subtitulo" => "required",
                 "descripcion" => "required",
-                "foto" => "required|image|mimes:jpeg,png,jpg,gif,svg|max:2048",
+                "foto" => "image|mimes:jpeg,png,jpg,gif|max:2048",
                 "fecha_de_asistencia" => "required|date",
-                "fecha_de_termino" => "required|date"
+                "fecha_de_termino" => "required|date|after_or_equal:fecha_de_asistencia"
             ]
             );
 
-        $this->checkValidation($validator);
+        $bandVali = $this->checkValidation($validator);
+        if($bandVali) return $bandVali;
+        
         $rutaImage = null;
 
         if($request->hasFile("foto")){
@@ -154,23 +158,22 @@ class EventoController extends ApiController
             if($bandExist) \Storage::disk('public')->delete($evento->foto);
             
             \Storage::disk('public')->put($rutaImage, \File::get($file));
+            $evento->foto = $rutaImage;
         }
 
         try{
-            $evento->titulo = $r->get("titulo");
-            $evento->subtitulo = $r->get("subtitulo");
-            $evento->descripcion = $r->get("descripcion");
-            $evento->foto = $r->get("foto");
-            $evento->foto = empty($rutaImage) ? null : $rutaImage;
-            $evento->fecha_de_asistencia = $this->convertTime2UTC($_Erequest["fecha_de_asistencia"]);
-            $evento->fecha_de_termino = $this->convertTime2UTC($_Erequest["fecha_de_termino"]);
+            $evento->titulo = $r["titulo"];
+            $evento->subtitulo = $r["subtitulo"];
+            $evento->descripcion = $r["descripcion"];
+            $evento->fecha_de_asistencia = $r["fecha_de_asistencia"];
+            $evento->fecha_de_termino = $r["fecha_de_termino"];
             $evento->save();
         }
         catch(\Exception $e){
             $bandExist = \Storage::disk("public")->exists($rutaImage);
             if($bandExist) \Storage::disk('public')->delete($rutaImage);
 
-            return $this->sendError("Error al crear Evento", $e, 500);
+            return $this->sendError("Error al crear Evento", ["errores" => $e], 500);
         }
         return $this->sendResponse(["evento" => $evento], "Evento modificado con exito!!");
     }

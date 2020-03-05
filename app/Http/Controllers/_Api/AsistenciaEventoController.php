@@ -39,7 +39,9 @@ class AsistenciaEventoController extends ApiController
                 "evento_id" => "required",
             ]
         );
-        $this->checkValidation($validator);
+
+        $bandVali = $this->checkValidation($validator);
+        if($bandVali) return $bandVali;
 
         $r["users_id"] = Auth::id();
         $suscrip_evento = AsistenciaEvento::create($r);
@@ -61,7 +63,10 @@ class AsistenciaEventoController extends ApiController
             return $this->sendError("No existe el evento", [], 404);
         }
 
-        $asistententes = AsistenciaEvento::where("evento_id", $id)->with("user")->get();
+        $asistententes = AsistenciaEvento::where("evento_id", $id)
+                        ->with("user")
+                        ->with("evento:id,users_id")
+                        ->get();
         /*$asistententes = AsistenciaEvento::where("evento_id", $id)
                         ->with(array('user'=>function($query) use ($server_storage){
                             $query->select(
@@ -123,7 +128,9 @@ class AsistenciaEventoController extends ApiController
                 "usuario_id" => "required"
             ]
         );
-        $this->checkValidation($validator);
+        
+        $bandVali = $this->checkValidation($validator);
+        if($bandVali) return $bandVali;
 
         $evento = Evento::find($r["evento_id"]);
         if($evento->users_id != Auth::id()){
@@ -142,6 +149,45 @@ class AsistenciaEventoController extends ApiController
                         ->update(["check_anfitrion" => 1]);
         
         return $this->sendResponse(["asistencia_evento" => $ae], "Se confirmo por parte del anfitrion la asistencia");
+    }
+
+    public function quitarCheckControl(Request $request){
+        $r = $request->all();
+        $validator = Validator::make(
+            $r,
+            [
+                "usuario_id" => "required",
+                "evento_id" => "required"
+            ]
+        );
+
+        $bandVali = $this->checkValidation($validator);
+        if($bandVali) return $bandVali;
+
+        $evento = Evento::find($r["evento_id"]);
+        if($evento->users_id != Auth::id()){
+            return $this->sendError("No eres propietario del evento", [], 404);
+        }
+
+        $checkControl = AsistenciaEvento::where([
+            ["evento_id", $r["evento_id"]],
+            ["users_id", $r["usuario_id"]]
+        ]);
+        $chFirts = $checkControl->first();
+        if($chFirts == null){
+            return $this->sendError("El usuario no participa del evento", [], 404);
+        }
+
+        if($chFirts->check_invitado != null){
+            return $this->sendError("La persona ya confirmo su asistencia", [], 404);
+        }
+
+        $checkControl = $checkControl->update([
+            "check_anfitrion" => null,
+            "estado" => 1,
+        ]);
+        
+        return $this->sendResponse(["asistencia_evento" => $checkControl], "Se cancelo el check-control al evento");
     }
 
     public function confirmarAsistencia(Request $request, $idd){
@@ -187,5 +233,4 @@ class AsistenciaEventoController extends ApiController
         $asistencia_evento = AsistenciaEvento::where("users_id", Auth::id())->delete();
         return $this->sendResponse(["asistencia" => $asistencia_evento], "Te desapuntaste del evento con exto!!");
     }
-
 }

@@ -44,7 +44,7 @@ class ApiController extends Controller
     public function validationImage($mimeType){
         $mimesAcept = array("image/jpeg", "image/png", "image/jpg", "image/gif", "image/svg");
         $m = strtolower($mimeType);
-        // return in_array($m, $mimesAcept);
+
         if(!in_array($m, $mimesAcept)){
             return $this->sendError("La imagen no cumple", [
                 "MimesAceptadas" => $mimesAcept,

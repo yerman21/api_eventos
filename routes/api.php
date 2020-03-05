@@ -18,9 +18,11 @@ Route::post("user/register", "_Api\UserController@register");
 Route::group(['middleware' => 'auth:api'], function(){
     Route::post("user/cambiar", "_Api\UserController@updateUser");
     Route::get("user/logout", "_Api\UserController@logout");
+    Route::get("user/data", "_Api\UserController@getUserData");
     
     Route::post("evento", "_Api\EventoController@store");
-    Route::put("evento/{id}", "_Api\EventoController@update");
+    Route::post("evento/edit/{id}", "_Api\EventoController@update");
+    Route::get("evento/edit/{id}", "_Api\EventoController@show");
     Route::get("evento/{opcion}", "_Api\EventoController@listarEventos");
     Route::delete("evento/{id}", "_Api\EventoController@destroy");
 
@@ -31,6 +33,7 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::delete("asistencia_evento/{id}", "_Api\AsistenciaEventoController@desapuntarceOfEvento");
     Route::put("asistencia_evento/pasar_asistencia", "_Api\AsistenciaEventoController@pasarLista");
     Route::put("asistencia_evento/confirmar_asistencia/{idd}", "_Api\AsistenciaEventoController@confirmarAsistencia");
+    Route::put("asistencia_evento/quitar/check-control", "_Api\AsistenciaEventoController@quitarCheckControl");
 });
 
 

@@ -14,4 +14,7 @@ class AsistenciaEvento extends Model
     public function user(){
         return $this->belongsTo("App\User", "users_id", "id");
     }
+    public function evento(){
+        return $this->belongsTo("App\Evento", "evento_id", "id");
+    }
 }

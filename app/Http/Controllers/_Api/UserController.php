@@ -12,6 +12,10 @@ use Validator;
 
 class UserController extends ApiController
 {
+    public function getUserData(){
+        return $this->sendResponse(["user" => Auth::user()], "Datos del usuario");
+    }
+
     public function register(Request $request){
         $user_request = $request->all();
 
@@ -30,7 +34,9 @@ class UserController extends ApiController
             ]
         );
 
-        $this->checkValidation($validator);
+        $bandVali = $this->checkValidation($validator);
+        if($bandVali) return $bandVali;
+
         if($request->hasFile("foto")){
             $file = $request->file('foto');
             
@@ -91,7 +97,9 @@ class UserController extends ApiController
             ]
         );
 
-        $this->checkValidation($validator);
+        $bandVali = $this->checkValidation($validator);
+        if($bandVali) return $bandVali;
+        
         $rutaImage = null;
 
         if($request->hasFile("foto")){
@@ -106,6 +114,7 @@ class UserController extends ApiController
             if($bandExist) \Storage::disk('public')->delete($user->foto);
             
             \Storage::disk('public')->put($rutaImage, \File::get($file));
+            $user->foto = empty($rutaImage) ? null : $rutaImage;
         }
 
         DB::beginTransaction();
@@ -116,7 +125,6 @@ class UserController extends ApiController
             $user->apodo = empty($user_request["apodo"]) ? null : $user_request["apodo"];
             $user->edad = $user_request["edad"];
             $user->genero = $user_request["genero"];
-            $user->foto = empty($rutaImage) ? null : $rutaImage;
 
             $user->save();
             DB::commit();
