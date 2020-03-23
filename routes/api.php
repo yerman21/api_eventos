@@ -13,17 +13,20 @@ use Illuminate\Http\Request;
 |
 */
 Route::post("login", "_Api\AuthController@login");
+Route::post("refreshToken", "_Api\AuthController@refreshToken");
 Route::post("user/register", "_Api\UserController@register");
+Route::get("user/logout", "_Api\UserController@logout");
 
 Route::group(['middleware' => 'auth:api'], function(){
     Route::post("user/cambiar", "_Api\UserController@updateUser");
-    Route::get("user/logout", "_Api\UserController@logout");
-    Route::get("user/data", "_Api\UserController@getUserData");
+    // Route::get("user/logout", "_Api\UserController@logout");
+    Route::get("user/data/{id?}", "_Api\UserController@getUserData");    
     
     Route::post("evento", "_Api\EventoController@store");
     Route::post("evento/edit/{id}", "_Api\EventoController@update");
     Route::get("evento/edit/{id}", "_Api\EventoController@show");
     Route::get("evento/{opcion}", "_Api\EventoController@listarEventos");
+    Route::get("evento/{opcion}/perfil/{idUsuario}", "_Api\EventoController@listarEventosByUsaurio");
     Route::delete("evento/{id}", "_Api\EventoController@destroy");
 
     Route::post("asistencia_evento", "_Api\AsistenciaEventoController@apuntarseEvento");

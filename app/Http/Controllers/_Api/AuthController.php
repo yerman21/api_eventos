@@ -27,22 +27,62 @@ class AuthController extends ApiController{
             return $this->sendError("credenciales incorrecta", [], 401);
         }
 
-        $user = Auth::user();
-        $tokenResult = $user->createToken('MiApp');
-        $token = $tokenResult->token;
+        // $user = Auth::user();
+        // $tokenResult = $user->createToken('MiApp');
+        // $token = $tokenResult->token;
+        // $token->expires_at = Carbon::now()->addMinutes(2);
         // if ($request->remember_me) {
         //     $token->expires_at = Carbon::now()->addWeeks(1);
         // }
-        $token->save();
+        // $token->save();
+
+        $data = [
+            'grant_type' => 'password',
+            'client_id' => 2,
+            'client_secret' => "3lDBPTBhk3XnOtnWCzJKaSprznoQmribb2BqXTql",
+            'username' => $r['email'],
+            'password' => $r['password'],
+            ];
+            
+        $requestToken = Request::create('/oauth/token', 'POST', $data);
+        $rpta = app()->handle($requestToken);
+        $data = json_decode($rpta->getContent());
 
         return $this->sendResponse([
-            "token" => [
-                'access_token' => $tokenResult->accessToken,
-                'token_type'   => 'Bearer',
-                'expires_at'   => Carbon::parse($token->expires_at)->toDateTimeString(),
-            ],
-            "userData" => $user
+            "token" => $data,
+            // [
+            //     'access_token' => $tokenResult->accessToken,
+            //     'token_type'   => 'Bearer',
+            //     'expires_in'   => Carbon::now()->diffInRealMilliseconds($token->expires_at),
+            //     'token_token' => $data
+            // ],
+            "userData" => Auth::user()
         ], "Bienveniedo!!");
+    }
+
+    public function refreshToken(Request $request){
+        $validator = Validator::make($request->all(), [
+            "refresh_token" => "required|string"
+        ]);
+
+        $bandVali = $this->checkValidation($validator);
+        if($bandVali) return $bandVali;
+
+        $data = [
+            'grant_type' => 'refresh_token',
+            'client_id' => 2,
+            'client_secret' => "3lDBPTBhk3XnOtnWCzJKaSprznoQmribb2BqXTql",
+            'refresh_token' => request("refresh_token")
+        ];
+            
+        $requestToken = Request::create('/oauth/token', 'POST', $data);
+        $rpta = app()->handle($requestToken);
+        $data = json_decode($rpta->getContent());
+
+        return $this->sendResponse([
+            "token" => $data,
+            "userData" => Auth::user()
+        ], "Bienveniedo de nuevo!!");
     }
 
     

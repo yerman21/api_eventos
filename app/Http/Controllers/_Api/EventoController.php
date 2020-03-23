@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use App\AsistenciaEvento;
 use App\Evento;
+use DB;
 use Validator;
 use Carbon\Carbon;
 
@@ -17,15 +18,6 @@ class EventoController extends ApiController
      *
      * @return \Illuminate\Http\Response
      */
-/*
-    public function misEventos(){
-        return $this->listarEventos("=");
-    }
-
-    public function otrosEventos(){
-        return $this->listarEventos("!=");
-    }
-*/
     public function listarEventos($opcion=0){
     //opcion 0: eventos que no son del usuario; otra opcion: eventos del usuario
         $operator = ($opcion == 0) ? "!=" : "=";
@@ -41,6 +33,39 @@ class EventoController extends ApiController
 
         return $this->sendResponse(
             ["eventos" => $eventos, "basePathImage" => asset("storage/")],
+             "Eventos recuperados con exito!!"
+        );
+    }
+
+    public function listarEventosByUsaurio($opcion, $idUsuario){
+        // $opcion -> 1(eventos del usuario), 0(eventos al que asistio el usuario)
+        if($opcion == 1){
+            $eventos = Evento::where("users_id", "=", $idUsuario)->get();
+
+            if($idUsuario != Auth::id()){
+                foreach($eventos as $index => $evento){
+                    $ae = AsistenciaEvento::where("users_id", "=", Auth::id())->where("evento_id", $evento->id)->first();
+                    $eventos[$index]["bandApuntado"] = !is_null($ae);
+                    $eventos[$index]["bandCheckAnfitrion"] = !is_null($ae) ? $ae->check_anfitrion : 0;
+                    $eventos[$index]["bandCheckInvitado"] = !is_null($ae) ? $ae->check_invitado : 0;
+                }
+            }
+        }else{
+            $eventos = DB::table("evento as e")
+                    ->join("asistencia_evento as ae", "e.id", "=", "ae.evento_id")
+                    ->where("ae.users_id", "=", $idUsuario)
+                    ->where("ae.estado", "=", "2")
+                    ->select("e.*")
+                    ->get();
+        }
+
+        return $this->sendResponse(
+            [
+                "eventos" => $eventos, 
+                "basePathImage" => asset("storage/"),
+                "opcion" => $opcion,
+                "idUsuario" => $idUsuario
+            ],
              "Eventos recuperados con exito!!"
         );
     }
@@ -206,21 +231,3 @@ class EventoController extends ApiController
     }
     
 }
-
-
-// Route::get('storage/{filename}', function ($filename)
-// {
-//     $path = storage_path('public/' . $filename);
-
-//     if (!File::exists($path)) {
-//         abort(404);
-//     }
-
-//     $file = File::get($path);
-//     $type = File::mimeType($path);
-
-//     $response = Response::make($file, 200);
-//     $response->header("Content-Type", $type);
-
-//     return $response;
-// });

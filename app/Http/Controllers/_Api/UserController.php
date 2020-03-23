@@ -12,8 +12,12 @@ use Validator;
 
 class UserController extends ApiController
 {
-    public function getUserData(){
-        return $this->sendResponse(["user" => Auth::user()], "Datos del usuario");
+    public function getUserData($id=null){
+        $user = User::find( $id == null ? Auth::id() : $id );
+        if($user == null){
+            return $this->sendError("No existe el usuario", [], 404);
+        }
+        return $this->sendResponse(["user" => $user], "Datos del usuario");
     }
 
     public function register(Request $request){
@@ -146,11 +150,14 @@ class UserController extends ApiController
     }
 
     public function logout(Request $request){
-        $bandRevoke = Auth::user()->token()->revoke();
+        $user = Auth::user();
+        if($user == null){
+            return $this->sendError("No ha iniciado session!!");
+        }
+        $bandRevoke = $user->token()->revoke();
         if(!$bandRevoke){
             return $this->sendError("No se pudo revocar el token");
         }
         return $this->sendResponse(["isRevoke" => $bandRevoke], "Session cerrada");
     }
-
 }

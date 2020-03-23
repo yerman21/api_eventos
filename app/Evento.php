@@ -25,4 +25,8 @@ class Evento extends Model
     // public function getFotoAttribute($value){
     //     return asset("storage/").$value;
     // }
+
+    public function asistenciaEventos(){
+        return $this->hasMany("App\AsistenciaEvento", "evento_id", "id");
+    }
 }
