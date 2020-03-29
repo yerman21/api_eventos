@@ -74,17 +74,18 @@ class AuthController extends ApiController{
             'client_secret' => "3lDBPTBhk3XnOtnWCzJKaSprznoQmribb2BqXTql",
             'refresh_token' => request("refresh_token")
         ];
-            
+
         $requestToken = Request::create('/oauth/token', 'POST', $data);
         $rpta = app()->handle($requestToken);
         $data = json_decode($rpta->getContent());
+        if(property_exists($data, "hint") && $data->hint == "Token has expired"){
+            return $this->sendError("Se vencio el refresh token", 401);
+        }
 
         return $this->sendResponse([
             "token" => $data,
+            "rpta" => $rpta,
             "userData" => Auth::user()
         ], "Bienveniedo de nuevo!!");
     }
-
-    
 }
-

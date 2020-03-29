@@ -15,13 +15,13 @@ use Illuminate\Http\Request;
 Route::post("login", "_Api\AuthController@login");
 Route::post("refreshToken", "_Api\AuthController@refreshToken");
 Route::post("user/register", "_Api\UserController@register");
-Route::get("user/logout", "_Api\UserController@logout");
+// Route::get("user/logout", "_Api\UserController@logout");
 
 Route::group(['middleware' => 'auth:api'], function(){
     Route::post("user/cambiar", "_Api\UserController@updateUser");
-    // Route::get("user/logout", "_Api\UserController@logout");
-    Route::get("user/data/{id?}", "_Api\UserController@getUserData");    
-    
+    Route::get("user/logout", "_Api\UserController@logout");
+    Route::get("user/data/{id?}", "_Api\UserController@getUserData");
+
     Route::post("evento", "_Api\EventoController@store");
     Route::post("evento/edit/{id}", "_Api\EventoController@update");
     Route::get("evento/edit/{id}", "_Api\EventoController@show");
@@ -32,7 +32,7 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::post("asistencia_evento", "_Api\AsistenciaEventoController@apuntarseEvento");
     // Route::get("asistencia_evento/mi_evento/{id}/asistentes", "_Api\AsistenciaEventoController@asistents_my_event");
     // Route::get("asistencia_evento/{id}/asistentes", "_Api\AsistenciaEventoController@asistents_to_event");
-    Route::get("asistencia_evento/{id}/asistentes", "_Api\AsistenciaEventoController@whoAsistentEvent");    
+    Route::get("asistencia_evento/{id}/asistentes", "_Api\AsistenciaEventoController@whoAsistentEvent");
     Route::delete("asistencia_evento/{id}", "_Api\AsistenciaEventoController@desapuntarceOfEvento");
     Route::put("asistencia_evento/pasar_asistencia", "_Api\AsistenciaEventoController@pasarLista");
     Route::put("asistencia_evento/confirmar_asistencia/{idd}", "_Api\AsistenciaEventoController@confirmarAsistencia");

@@ -30,8 +30,10 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
 
-        Passport::tokensExpireIn(now()->addMinutes(30));
-        Passport::refreshTokensExpireIn(now()->addDays(2));
+        Passport::tokensExpireIn(now()->addSeconds(5));
+        // Passport::tokensExpireIn(now()->addMinutes(1));
+        // Passport::refreshTokensExpireIn(now()->addDays(2));
+        Passport::refreshTokensExpireIn(now()->addSeconds(7));
 
         Passport::routes();
     }
